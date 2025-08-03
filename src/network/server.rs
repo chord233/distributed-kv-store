@@ -93,6 +93,7 @@ use tracing::{debug, error, info, warn};
 /// ```
 #[derive(Clone)]
 pub struct RaftServer {
+    #[allow(dead_code)]
     raft: Arc<RwLock<RaftConsensus>>,
 }
 

@@ -49,8 +49,9 @@
 use crate::api::{
     ApiService, PutRequest, GetRequest, DeleteRequest, ListRequest,
     ClusterStatusRequest, AddNodeRequest, RemoveNodeRequest,
-    ApiError, ApiResult,
+    ApiError,
 };
+use base64::{Engine as _, engine::general_purpose};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -59,9 +60,9 @@ use axum::{
     Router,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+
 use std::sync::Arc;
-use tower::ServiceBuilder;
+
 use tower_http::{
     cors::CorsLayer,
     trace::TraceLayer,
@@ -248,7 +249,7 @@ async fn get_key(
         Ok(response) => {
             if response.found {
                 let value = response.value.unwrap_or_default();
-                let encoded_value = base64::encode(&value);
+                let encoded_value = general_purpose::STANDARD.encode(&value);
                 Json(SuccessResponse {
                     success: true,
                     data: serde_json::json!({
@@ -277,7 +278,7 @@ async fn put_key(
     debug!("HTTP PUT /api/v1/kv/{}", key);
     
     // Decode base64 value
-    let value = match base64::decode(&body.value) {
+    let value = match general_purpose::STANDARD.decode(&body.value) {
         Ok(v) => v,
         Err(_) => {
             return (StatusCode::BAD_REQUEST, Json(ErrorResponse {
@@ -537,7 +538,7 @@ mod tests {
     use tokio::sync::RwLock;
     
     async fn create_test_server() -> TestServer {
-        let node_config = NodeConfig::default();
+        let _node_config = NodeConfig::default();
         let raft_config = RaftConfig::default();
         let test_db_path = format!("test_data_{}_{}", std::process::id(), std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos());
         let storage = Arc::new(Storage::new(test_db_path).await.expect("Failed to create storage"));

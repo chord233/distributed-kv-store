@@ -177,6 +177,7 @@ pub struct NetworkManager {
     /// 到其他节点的客户端连接
     clients: Arc<RwLock<HashMap<NodeId, RaftClient>>>,
     /// 服务器实例
+    #[allow(dead_code)]
     server: Option<RaftServer>,
 }
 

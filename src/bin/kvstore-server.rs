@@ -76,7 +76,7 @@
 //! - `ClusterStatus(ClusterStatusRequest)` - 获取集群状态
 
 use distributed_kv_store::{
-    NodeConfig, RaftConfig, KvStoreError,
+    NodeConfig, RaftConfig,
     api::{ApiService, http::HttpServer, grpc::GrpcServer},
     raft::RaftConsensus,
     storage::Storage,
@@ -362,7 +362,7 @@ async fn start_server(config: ServerConfig) -> Result<(), Box<dyn std::error::Er
     // Start Raft consensus
     info!("Starting Raft consensus...");
     {
-        let mut raft_guard = raft.write().await;
+        let raft_guard = raft.write().await;
         raft_guard.start().await.map_err(|e| {
             error!("Failed to start Raft consensus: {}", e);
             e

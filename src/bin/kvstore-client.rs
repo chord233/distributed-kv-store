@@ -115,12 +115,13 @@
 //! | `benchmark <type>` | 运行性能测试 | `benchmark write` |
 
 use distributed_kv_store::api::grpc::GrpcClient;
-use std::collections::HashMap;
+
 use std::time::Instant;
-use clap::{Arg, Command, ArgMatches, Subcommand};
+use clap::{Arg, Command, ArgMatches};
 use serde_json::{Value, json};
 use tracing::{info, error, debug};
 use tokio::time::{timeout, Duration};
+use base64::{Engine as _, engine::general_purpose};
 
 /// Client configuration
 #[derive(Debug, Clone)]
@@ -188,7 +189,7 @@ impl HttpClient {
     ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
         let mut body = json!({
             "key": key,
-            "value": base64::encode(value)
+            "value": general_purpose::STANDARD.encode(value)
         });
         
         if let Some(ttl) = ttl {
@@ -388,15 +389,7 @@ impl KvStoreClient {
         })
     }
     
-    /// Execute a command with timeout
-    async fn execute_with_timeout<F, T>(&self, operation: F) -> Result<T, Box<dyn std::error::Error + Send + Sync>>
-    where
-        F: std::future::Future<Output = Result<T, Box<dyn std::error::Error + Send + Sync>>>,
-    {
-        timeout(self.config.timeout, operation)
-            .await
-            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> { "Operation timed out".into() })?
-    }
+
     
     /// Put a key-value pair
     pub async fn put(
@@ -444,7 +437,7 @@ impl KvStoreClient {
                     let response = client.get(key.to_string()).await
                         .map_err(|e| format!("gRPC error: {}", e))?;
                     Ok(json!({
-                        "value": if response.found { Some(base64::encode(&response.value)) } else { None },
+                        "value": if response.found { Some(general_purpose::STANDARD.encode(&response.value)) } else { None },
                         "found": response.found
                     }))
                 }

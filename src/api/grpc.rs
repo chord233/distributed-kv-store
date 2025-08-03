@@ -19,7 +19,7 @@
 use crate::api::{
     ApiService, PutRequest, GetRequest, DeleteRequest, ListRequest,
     AddNodeRequest, RemoveNodeRequest,
-    ApiError, ApiResult,
+    ApiError,
 };
 use crate::proto;
 use std::sync::Arc;
@@ -620,7 +620,7 @@ fn convert_api_error(error: ApiError) -> Status {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tokio_test;
+
     
     /// 测试 gRPC 配置的默认值
     #[tokio::test]
