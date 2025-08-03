@@ -1,0 +1,153 @@
+syntax = "proto3";
+
+package kvstore;
+
+// Key-Value Store Service
+service KvStore {
+    // Basic KV operations
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc Put(PutRequest) returns (PutResponse);
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
+    rpc List(ListRequest) returns (ListResponse);
+    
+    // Cluster management
+    rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
+    rpc RemoveNode(RemoveNodeRequest) returns (RemoveNodeResponse);
+    rpc GetClusterInfo(GetClusterInfoRequest) returns (GetClusterInfoResponse);
+}
+
+// Raft Service for internal communication
+service Raft {
+    rpc RequestVote(VoteRequest) returns (VoteResponse);
+    rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesResponse);
+    rpc InstallSnapshot(InstallSnapshotRequest) returns (InstallSnapshotResponse);
+}
+
+// KV Store Messages
+message GetRequest {
+    string key = 1;
+}
+
+message GetResponse {
+    bool found = 1;
+    string value = 2;
+    string error = 3;
+}
+
+message PutRequest {
+    string key = 1;
+    string value = 2;
+}
+
+message PutResponse {
+    bool success = 1;
+    string error = 2;
+}
+
+message DeleteRequest {
+    string key = 1;
+}
+
+message DeleteResponse {
+    bool success = 1;
+    string error = 2;
+}
+
+message ListRequest {
+    string prefix = 1;
+    int32 limit = 2;
+}
+
+message ListResponse {
+    repeated KeyValue pairs = 1;
+    string error = 2;
+}
+
+message KeyValue {
+    string key = 1;
+    string value = 2;
+}
+
+// Cluster Management Messages
+message AddNodeRequest {
+    string node_id = 1;
+    string address = 2;
+}
+
+message AddNodeResponse {
+    bool success = 1;
+    string error = 2;
+}
+
+message RemoveNodeRequest {
+    string node_id = 1;
+}
+
+message RemoveNodeResponse {
+    bool success = 1;
+    string error = 2;
+}
+
+message GetClusterInfoRequest {}
+
+message GetClusterInfoResponse {
+    repeated NodeInfo nodes = 1;
+    string leader_id = 2;
+    int64 term = 3;
+}
+
+message NodeInfo {
+    string node_id = 1;
+    string address = 2;
+    string state = 3;
+    int64 last_heartbeat = 4;
+}
+
+// Raft Messages
+message VoteRequest {
+    int64 term = 1;
+    string candidate_id = 2;
+    int64 last_log_index = 3;
+    int64 last_log_term = 4;
+}
+
+message VoteResponse {
+    int64 term = 1;
+    bool vote_granted = 2;
+}
+
+message AppendEntriesRequest {
+    int64 term = 1;
+    string leader_id = 2;
+    int64 prev_log_index = 3;
+    int64 prev_log_term = 4;
+    repeated LogEntry entries = 5;
+    int64 leader_commit = 6;
+}
+
+message AppendEntriesResponse {
+    int64 term = 1;
+    bool success = 2;
+    int64 match_index = 3;
+}
+
+message LogEntry {
+    int64 term = 1;
+    int64 index = 2;
+    bytes data = 3;
+    string entry_type = 4;
+}
+
+message InstallSnapshotRequest {
+    int64 term = 1;
+    string leader_id = 2;
+    int64 last_included_index = 3;
+    int64 last_included_term = 4;
+    int64 offset = 5;
+    bytes data = 6;
+    bool done = 7;
+}
+
+message InstallSnapshotResponse {
+    int64 term = 1;
+}
